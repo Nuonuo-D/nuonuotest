@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title></title>
+		<link rel="stylesheet" type="text/css" href="planeWars.css"/>
+	</head>
+	<body>
+		<div id="body_main" class="main">
+			<span id="showScore">score:0</span>
+			<ul id="options" class="options">
+				<li value="1">超级困难</li>
+				<li value="2">非常困难</li>
+				<li value="3">比较困难</li>
+				<li value="4">新手难度</li>
+			</ul>
+		</div>
+	</body>
+	<script type="text/javascript">
+//		var a=1;
+//		console.log(a=a+1)//2
+//		setInterval(()=>{
+//			
+//			 a++
+//			console.log(a++);
+//		},500)
+
+//有空研究一下load里面的计时器，应该可以清除才对；??×？
+
+//暂停游戏怎么做
+                   //先写空投包的效果
+
+////死亡游戏停止,出现选择框//游戏重新开始 或者退出游戏；
+
+// //做个span，计分的时候显示加的分数
+//敌机是不是也要有发射子弹的效果；
+//键盘事件控制左右移动怎么样啊？？？？？
+//			敌机应该也能制造子弹才对；
+//做个倒计时重新开始的框框？
+//可以做一个根据分数判断星级的，做1-5共五个星级图。。结束的时候显示；
+//做个分数达到一定程度敌方飞机加速的效果：并且跳出第1关，第2关等字；//然后再来个敌方加速进军的文字？//创建敌机的速度也相应提高？
+//
+
+//		飞机大战:
+//			引擎:绑定点击事件,选择难度,生成动画(背景,logo,loading),开始游戏
+//			我的飞机:创建,跟随鼠标移动,发出子弹,碰撞敌机死亡
+//			子弹:跟随我的飞机创建,运动,顶部死亡,碰撞敌机死亡
+//			敌机:随机创建(位置,类型(小,中,大)),运动,碰撞,死亡;
+
+
+			
+		function Engine(){
+			this.btn = document.getElementById("options").children;
+			
+			this.main = document.getElementById("body_main");
+			this.showScore = document.getElementById("showScore")
+			this.hard = 1;
+//			this.stronger = false;
+//			this.game = true;
+			this.init()
+		}
+		
+		Engine.prototype.init = function(){
+			var that = this;
+			for(var i = 0;i<this.btn.length;i++){
+				this.btn[i].onclick = function(){
+					that.hard = this.value;
+					this.parentNode.remove();
+					that.load();
+				}
+			}
+		}
+		
+		Engine.prototype.load = function(){
+			var logo = createDiv("logo");
+			var loading =createDiv("loading");
+			
+			var bgSpeed = 2;
+			var bgInow = 0;
+			var bgtime = setInterval(()=>{
+				this.main.style.backgroundPositionY =(bgInow += bgSpeed)+"px";
+			},30)
+			
+			var loadI = 1
+			var loadtime = setInterval(()=>{
+				loading.style.backgroundImage = "url(images/loading"+((loadI++)%3+1)+".png)"
+//				console.log((loadI++)%3+1)  //console.log()里的++也会运算的。。。。。
+			},500)
+			
+			setTimeout(()=>{
+				logo.remove();
+				loading.remove();
+				clearInterval(loadtime);
+				
+				this.gameStart();                                   
+			},2000)         //等完全写完记得把时间改改长；
+		}
+		
+		Engine.prototype.gameStart = function(){
+			var that = this;
+			plane.init(this.main);
+			plane.fire(this.hard);
+			this.showScore.style.display ="block";
+			
+				this.createEnemyTimer1=setInterval(function(){
+					if(Math.random()>0.5){
+						new Enemy(that.main,1)
+					}
+				},1000)
+			
+				this.createEnemyTimer2=setInterval(function(){
+					if(Math.random()>0.65){
+						new Enemy(that.main,2)
+					}
+				},3000)
+			
+				this.createEnemyTimer3=setInterval(function(){
+					if(Math.random()>0.8){
+						new Enemy(that.main,3)
+					}
+				},4000)
+				
+				this.createMaterialTimer=setInterval(function(){
+					if(Math.random()>0.65){
+						new Material(that.main)
+					}
+				},4000)            //测试完毕再把时间和概率改小
+		}
+			
+		Engine.prototype.gameOver = function(){
+			console.log("游戏结束！");
+			var gameOverbg = createDiv("gameOverbg");
+			gameOverbg.innerHTML =`<h2>你的得分：${plane.count}</h2>
+									<h1>游戏结束</h1>`;
+			var logo = createDiv("logo");
+			this.overTimer =setTimeout(function(){
+//				history.go(0);	//刷新页面的方式二选一；
+				location.reload();
+//				要不要来个重新开始的按钮，上面显示倒计时;
+			},4000)
+			
+//			clearInterval(this.createEnemyTimer1)
+//			clearInterval(this.createEnemyTimer2)
+//			clearInterval(this.createEnemyTimer3) //没用
+//			this.options = createDiv("options");//发现创建options肯定不能生效，是不是因为option.remove相关的一系列函数还在执行啊？？？？？
+//			clearInterval(this.createEnemyTimer);//发现无效
+//			清除 load的计时器试一试;
+//			this.gameStart = null;  //无效
+		}
+			
+		  
+		//单体对象plane
+		var plane = {
+			init:function(main){
+				this.main = main;
+				this.stronger = false;
+				this.ele = createDiv("my-warplane");
+				this.ele.style.left = (this.main.offsetWidth - this.ele.offsetWidth)/2 + "px";
+				this.ele.style.top = this.main.offsetHeight - this.ele.offsetHeight+"px";
+				this.count = 0;
+				
+				document.onmousemove = (eve)=>{
+					var e = eve || window.event
+					this.move(e)
+				}
+			},
+			move:function(e){
+				var l = e.clientX - this.main.offsetLeft - this.ele.offsetWidth/2;
+				var t = e.clientY - this.ele.offsetHeight/2;
+				
+				if(l<0) l=0;
+				if(t<0) t = 0;
+				if(l>this.main.offsetWidth -this.ele.offsetWidth){
+					l =this.main.offsetWidth - this.ele.offsetWidth;
+				}
+				if(t>this.main.offsetHeight- this.ele.offsetHeight){
+					t =this.main.offsetHeight- this.ele.offsetHeight;
+				}
+				this.ele.style.left = l+"px";
+				this.ele.style.top = t +"px";
+			},
+			fire:function(hard){
+				var t = 100;
+				switch(hard){
+					case 1:t=700;break;
+					case 2:t=500;break;
+					case 3:t=350;break;
+					case 4:t=200;break;
+				}
+				//创建子弹
+				setInterval(function(){
+					if(plane.stronger){
+						
+						switch(hard){
+							case 1:t=560;break;
+							case 2:t=400;break;
+							case 3:t=280;break;
+							case 4:t=160;break;
+						}
+						setInterval(function(){
+							switch(hard){
+								case 1:t=700;break;
+								case 2:t=500;break;
+								case 3:t=350;break;
+								case 4:t=200;break;
+							}
+						},8000)
+					}
+					this.aBullet.push(new Bullet(this.main))   //把Bullet整个对象复制到aBullet这个数组中去；这个是精髓啊
+					console.log(t)
+				}.bind(this),t)
+//				new Bullet(this.main);
+			},
+			
+			aBullet:[],
+			
+			die:function(){
+				var i= 1;
+				this.IDieTimer=setInterval(()=>{
+					if(i==5){
+						clearInterval(this.IDieTimer);
+						this.ele.remove();
+						
+					}else{
+						this.ele.style.backgroundImage="url(images/me_die"+(i++)+".png)"
+					}
+				},80)
+				clearTimeout(this.overTimer);  //清除延时器很重要！不然就是白写这延时器了！
+				
+				this.overTimer =setTimeout(function(){
+					document.getElementById("showScore").innerHTML ="";
+					engine.gameOver();
+					
+				},400)
+			}
+			
+		}
+		
+		
+		//利用原型对象；
+		function Bullet(main){
+			this.main = main;
+			this.init();
+		}
+		Bullet.prototype ={
+			constructor:Bullet,    //当我们把prototype当成一个真正的对象去进行操作的时候，我们可以直接在里面写方法，写属性；但是需要把它被覆盖掉的constructor再手动写回来；
+//因为把prototype当成一个真正的对象去进行操作的时候，会把它原本自带的constructor覆盖掉了。//这个constructor是指向它本身的？
+			init:function(){
+				if(plane.stronger){
+					this.ele = createDiv("bulletStronger")
+				}else{
+					this.ele = createDiv("bullet");
+				}
+//				console.log(plane.stronger)
+				this.ele.style.left = plane.ele.offsetLeft + plane.ele.offsetWidth/2-this.ele.offsetWidth/2+"px";
+				this.ele.style.top = plane.ele.offsetTop - this.ele.offsetHeight + "px";
+				
+				this.move()
+			},
+			move:function(){
+				var that = this;
+				var t=30;
+				if(plane.stronger){t=20}
+				this.timer = setInterval(function(){
+					
+					that.ele.style.top = (that.ele.offsetTop-6)+"px";
+					if(that.ele.offsetTop<-40){
+						clearInterval(that.timer)
+						that.die()
+					}
+				},t)
+			},
+			die:function(){
+				this.ele.className = "bullet_die";
+				
+				setTimeout(function(){
+					this.ele.style.backgroundImage = "url(images/die2.png)"
+				}.bind(this),50)   //待：这个时间改短看看？//1
+				
+				setTimeout(function(){
+					this.ele.remove()
+				}.bind(this),100)  //待：这个时间改短看看？//1
+				
+				for(var i= 0;i<plane.aBullet.length;i++){
+					if(plane.aBullet[i].ele==this.ele){
+						plane.aBullet.splice(i,1)
+					}                //这个是精髓啊，把消失掉的子弹从数组中移除；
+				}
+			}
+		}
+		//空投包
+		class Material{
+			constructor(main){
+				this.main = main;
+				this.init();
+//				this.stronger = stronger
+			}
+			
+			init(){
+				this.ele = createDiv("material");
+				this.speed=3;
+				this.ele.style.left = Math.round(Math.random()*(this.main.offsetWidth-this.ele.offsetWidth))+"px";
+				this.ele.style.top = - this.ele.offsetHeight+"px";
+				
+				this.move();
+			}
+			
+			move(){
+				this.moveMaterialTimer = setInterval(function(){
+					this.ele.style.top = (this.ele.offsetTop+this.speed)+"px";
+					if(this.ele.offsetTop>this.main.offsetHeight){
+						clearInterval(this.moveMaterialTimer);
+						this.die()
+					}
+					if(plane.ele.offsetWidth+plane.ele.offsetLeft>this.ele.offsetLeft){
+						if(plane.ele.offsetLeft<this.ele.offsetLeft+this.ele.offsetWidth){
+							 if(plane.ele.offsetTop<this.ele.offsetTop+this.ele.offsetHeight){
+							 	if(plane.ele.offsetTop+plane.ele.offsetHeight>this.ele.offsetTop){
+							 		this.dieMaterialTimer= setTimeout(function(){
+//							 			var t;
+							 			clearTimeout(this.dieMaterialTimer);//清除计时器还是要写在计时器里面的好
+							 			this.die();
+								 		plane.stronger = true;
+							 			this.superTimer= setTimeout(function(){
+											clearTimeout(this.superTimer);//清除计时器还是要写在计时器里面的好
+					//						console.log(plane.stronger)
+											plane.stronger = false;
+										}.bind(this),8000);
+							 			
+									}.bind(this),40)
+							 	}
+							 }
+						}
+					}
+				}.bind(this),30)
+			}
+			
+			die(){
+					this.ele.remove();
+			}
+		}
+		
+		class Enemy{
+			constructor(main,type){
+				this.main = main;
+				this.type = type;
+				this.init()
+			}
+			
+			init(){
+				switch(this.type){       //优化的时候这里每种case加一个不同的分值
+					case 1:
+						this.ele = createDiv("enemy-small"); //小飞机；
+						this.speed = 3;
+						this.hp = 1;    //记录血量
+						this.num = 3;   //这个记录的是敌机死亡时候效果图的数量；
+						this.score = 1;
+						break;
+					case 2:
+						this.ele = createDiv("enemy-middle");  //中飞机
+						this.speed = 2;
+						this.hp = 3;
+						this.num = 4;
+						this.score = 10;
+						break;   //bug1：忘记写break的时候出现 "中飞机" 在地图原点位置一动不动的情况；
+					case 3:
+						this.ele =createDiv("enemy-large");     //大飞机
+						this.speed = 1;
+						this.hp = 8;
+						this.num = 6;
+						this.score = 100;
+						break;
+				}
+				this.safeAreaW = plane.ele.offsetWidth/2- this.ele.offsetWidth
+					//敌机出现的水平位置要限定一下，做个加减法，不能太靠边，导致飞机的子弹完全打不到（主要是会出现边缘出现的小飞机会打不到的情况
+				this.ele.style.left = Math.round(Math.random()*(this.main.offsetWidth-this.ele.offsetWidth))+"px";   //水平位置随机
+				this.ele.style.top = -this.ele.offsetHeight +"px";  //垂直位置固定，从画面顶部开始出现
+				
+				this.move();
+			}
+			
+			move(){
+				this.timer = setInterval(()=>{
+					this.ele.style.top = (this.ele.offsetTop +this.speed)+"px";
+					if(this.ele.offsetTop>this.main.offsetHeight){  //这个if有待补充？；
+						clearInterval(this.timer)
+						this.die();
+					}
+						//碰撞检测  //检测子弹是不是碰到敌机了      //相当于圈出一个方块，进入地方飞机身体领域的都是碰撞
+					for(var i =0;i<plane.aBullet.length;i++){
+						if(plane.aBullet[i].ele.offsetLeft+plane.aBullet[i].ele.offsetWidth>this.ele.offsetLeft){
+							if(plane.aBullet[i].ele.offsetLeft<this.ele.offsetLeft+this.ele.offsetWidth){
+								if(plane.aBullet[i].ele.offsetTop<this.ele.offsetTop+this.ele.offsetHeight){
+									if(plane.aBullet[i].ele.offsetTop+plane.aBullet[i].ele.offsetHeight>this.ele.offsetTop){
+										//这最后一个if如果不写的话，就会出现当飞机深入敌后攻击的时候，位于飞机身后对应范围内的敌机也会爆炸；
+										plane.aBullet[i].die();
+										this.hp--;
+										if(this.hp<=0){
+											this.die();  
+											//敌机死亡后计分
+											clearTimeout(this.counttimer);  //清除延时器很重要！不然就是白写这延时器了！
+											this.counttimer =setTimeout(function(){
+												this.count();
+											}.bind(this),250)    //这个时间最好设置成一个变量，就是保证在die()的死亡动画结束之后再计时；
+										}
+									}
+								}
+							}
+						}
+					}
+					
+					//我的飞机碰到敌机死亡
+					if(plane.ele.offsetWidth+plane.ele.offsetLeft>this.ele.offsetLeft){
+						if(plane.ele.offsetLeft<this.ele.offsetLeft+this.ele.offsetWidth){
+							 if(plane.ele.offsetTop<this.ele.offsetTop+this.ele.offsetHeight){
+							 	if(plane.ele.offsetTop+plane.ele.offsetHeight>this.ele.offsetTop){
+							 		plane.die();
+							 	}
+							 }
+						}
+					}
+					
+					
+				},30)
+				
+				//还要做一个飞机超出下边界之后死亡的 吧？
+			}
+			
+			die(){
+				var i = 1;
+				this.dieTimer = setInterval(()=>{
+					if(i==this.num+1){
+						clearInterval(this.dieTimer);
+						this.ele.remove();
+					}else{
+						this.ele.style.backgroundImage = "url(images/plane"+this.type +"_die"+(i++)+".png)";
+					}
+				},40)
+		
+			}
+			count(){
+					plane.count+=this.score;   //
+					document.getElementById("showScore").innerHTML ="score:"+plane.count
+			}
+		}
+	//敌机结束
+		
+		function createDiv(myclass){
+			var div = document.createElement("div");
+			div.className = myclass;
+			document.getElementById("body_main").appendChild(div);  
+			return div;
+		}
+		
+		var engine = new Engine();
+	</script>
+</html>
